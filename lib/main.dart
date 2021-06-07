@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Get % Battery from Native'),
     );
   }
 }
@@ -28,12 +29,28 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  static const platform = const MethodChannel('com.example.app_check_battery/battery');
+  // Get battery level.
+  String _batteryLevel = 'Unknown battery level.';
 
-  void _incrementCounter() {
+  Future<void> _getBatteryLevel() async {
+    String level;
+    try {
+      final int result = await platform.invokeMethod('getBatteryLevel');
+      level = 'Battery level at $result % .';
+    } on PlatformException catch (e) {
+      level = "Failed to get battery level: '${e.message}'.";
+    }
+
     setState(() {
-      _counter++;
+      _batteryLevel = level;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getBatteryLevel();
   }
 
   @override
@@ -47,19 +64,10 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+              '$_batteryLevel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }
